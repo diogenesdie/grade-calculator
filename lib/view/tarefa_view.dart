@@ -12,15 +12,14 @@ class TarefaView extends StatefulWidget {
 }
 
 class _TarefasViewState extends State<TarefaView> {
-  late Future<List<Tarefa>> _tarefas;
+  List<Tarefa> _tarefas = [];
   List<dynamic> _calculos = [];
   String _filtro = '';
 
   @override
   void initState() {
     super.initState();
-    _insereTarefas();
-    _carregarTarefas();  // Inicialmente carrega sem filtro
+    _carregarTarefas(insere: true);
     _loadCalculos();
   }
 
@@ -32,14 +31,14 @@ class _TarefasViewState extends State<TarefaView> {
     });
   }
 
-  void _insereTarefas() async {
-    await widget.presenter.inserirTarefas();
-  }
+  void _carregarTarefas({bool insere = false}) async {
+    if (insere) {
+      await widget.presenter.inserirTarefas();
+    }
+    List<Tarefa> tarefas = await widget.presenter.carregarTarefas(_filtro);
 
-  void _carregarTarefas() {
     setState(() {
-      // Chama o método do presenter com o filtro
-      _tarefas = widget.presenter.carregarTarefas(_filtro);
+      _tarefas = tarefas;
     });
   }
 
@@ -61,45 +60,32 @@ class _TarefasViewState extends State<TarefaView> {
               ),
               onChanged: (value) {
                 setState(() {
-                  _filtro = value;  // Atualiza o valor do filtro
+                  _filtro = value; // Atualiza o valor do filtro
                 });
-                _carregarTarefas();  // Recarrega a lista com o novo filtro
+                _carregarTarefas(); // Recarrega a lista com o novo filtro
               },
             ),
           ),
           // Exibe a lista de tarefas filtradas ou todas
           Expanded(
-            child: FutureBuilder<List<Tarefa>>(
-              future: _tarefas,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return const Center(child: Text('Erro ao carregar tarefas'));
-                }
+            child: ListView.builder(
+              itemCount: _tarefas.length,
+              itemBuilder: (context, index) {
+                final tarefa = _tarefas[index];
 
-                final tarefas = snapshot.data ?? [];
-
-                return ListView.builder(
-                  itemCount: tarefas.length,
-                  itemBuilder: (context, index) {
-                    final tarefa = tarefas[index];
-
-                    return ListTile(
-                      title: Text(tarefa.titulo),
-                      subtitle: Text('Peso: ${tarefa.peso}'),
-                      trailing: SizedBox(
-                        width: 100,
-                        child: TextField(
-                          decoration: const InputDecoration(labelText: 'Nota'),
-                          keyboardType: TextInputType.number,
-                          onChanged: (value) {
-                            tarefa.nota = double.tryParse(value);
-                          },
-                        ),
-                      ),
-                    );
-                  },
+                return ListTile(
+                  title: Text(tarefa.titulo),
+                  subtitle: Text('Peso: ${tarefa.peso}'),
+                  trailing: SizedBox(
+                    width: 100,
+                    child: TextField(
+                      decoration: const InputDecoration(labelText: 'Nota'),
+                      keyboardType: TextInputType.number,
+                      onChanged: (value) {
+                        tarefa.nota = double.tryParse(value);
+                      },
+                    ),
+                  ),
                 );
               },
             ),

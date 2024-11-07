@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:calculadora_nota/dao/tarefa_dao.dart';
 import 'package:calculadora_nota/model/tarefa_model.dart';
-import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TarefaPresenter {
@@ -12,8 +12,14 @@ class TarefaPresenter {
   Future<void> inserirTarefas() async {
     try {
       // Carrega o JSON dos assets
-      final jsonString = await rootBundle.loadString('assets/notas.json');
-      final List<dynamic> jsonData = json.decode(jsonString);
+      final response = await http.get(Uri.parse("https://back-tarefas-bfhjb9chgee4g4at.canadacentral-01.azurewebsites.net/tarefas"));
+
+      if (response.statusCode < 200 || response.statusCode > 299) {
+        print("Erro ao buscar dados na API");
+        return;
+      }
+
+      final List<dynamic> jsonData = json.decode(response.body);
 
       // Transforma o JSON em uma lista de Tarefa
       List<Tarefa> tarefasJson = jsonData.map((item) => Tarefa.fromJson(item)).toList();
