@@ -9,11 +9,31 @@ class TarefaPresenter {
 
   TarefaPresenter(this.db);
 
+  Future<void> inserirTarefas() async {
+    try {
+      // Carrega o JSON dos assets
+      final jsonString = await rootBundle.loadString('assets/notas.json');
+      final List<dynamic> jsonData = json.decode(jsonString);
+
+      // Transforma o JSON em uma lista de Tarefa
+      List<Tarefa> tarefasJson = jsonData.map((item) => Tarefa.fromJson(item)).toList();
+
+      // Insere todas as tarefas no banco de dados
+      for (Tarefa tarefa in tarefasJson) {
+        await db.inserirTarefa(tarefa);
+      }
+
+    } catch(e, stack) {
+      print(e);
+      print(stack);
+    }
+  }
+
   // Carregar JSON trasnformando em uma lista de tarefas
-  Future<List<Tarefa>> carregarTarefas() async {
-    final jsonString = await rootBundle.loadString('assets/notas.json');
-    final List<dynamic> jsonData = json.decode(jsonString);
-    return jsonData.map((item) => Tarefa.fromJson(item)).toList();
+  Future<List<Tarefa>> carregarTarefas(String filter) async {
+    // Primeiro, tenta carregar as tarefas do banco de dados
+    List<Tarefa> tarefasBanco = await db.listarTarefas(filter);
+    return tarefasBanco;
   }
 
   // Calcular a nota final
@@ -34,14 +54,6 @@ class TarefaPresenter {
     double notaFinal = mediaPonderadaConvertida + (notaProva / 10) * 7;
 
     return notaFinal;
-  }
-
-  // Salvar notas no banco
-  Future<void> salvarTarefas(List<Tarefa> tarefas) async {
-    for (var tarefa in tarefas) {
-      tarefa.timestamp = DateTime.now();
-      await db.inserirTarefa(tarefa);
-    }
   }
 
   Future<void> salvaCalculo(double notaFinal) async {

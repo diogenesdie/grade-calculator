@@ -14,19 +14,32 @@ class TarefaView extends StatefulWidget {
 class _TarefasViewState extends State<TarefaView> {
   late Future<List<Tarefa>> _tarefas;
   List<dynamic> _calculos = [];
+  String _filtro = '';
 
   @override
   void initState() {
     super.initState();
-    _tarefas = widget.presenter.carregarTarefas();
+    _insereTarefas();
+    _carregarTarefas();  // Inicialmente carrega sem filtro
     _loadCalculos();
   }
 
   void _loadCalculos() async {
-    List<dynamic> calculos =  await widget.presenter.getCalculos();
+    List<dynamic> calculos = await widget.presenter.getCalculos();
 
     setState(() {
       _calculos = calculos;
+    });
+  }
+
+  void _insereTarefas() async {
+    await widget.presenter.inserirTarefas();
+  }
+
+  void _carregarTarefas() {
+    setState(() {
+      // Chama o método do presenter com o filtro
+      _tarefas = widget.presenter.carregarTarefas(_filtro);
     });
   }
 
@@ -38,7 +51,23 @@ class _TarefasViewState extends State<TarefaView> {
       ),
       body: Column(
         children: [
-          // Exibe a lista de tarefas
+          // Barra de busca para filtrar as tarefas
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              decoration: const InputDecoration(
+                labelText: 'Buscar Tarefa',
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _filtro = value;  // Atualiza o valor do filtro
+                });
+                _carregarTarefas();  // Recarrega a lista com o novo filtro
+              },
+            ),
+          ),
+          // Exibe a lista de tarefas filtradas ou todas
           Expanded(
             child: FutureBuilder<List<Tarefa>>(
               future: _tarefas,
@@ -49,7 +78,7 @@ class _TarefasViewState extends State<TarefaView> {
                   return const Center(child: Text('Erro ao carregar tarefas'));
                 }
 
-                final tarefas = snapshot.data!;
+                final tarefas = snapshot.data ?? [];
 
                 return ListView.builder(
                   itemCount: tarefas.length,
@@ -97,12 +126,11 @@ class _TarefasViewState extends State<TarefaView> {
         onPressed: () async {
           try {
             final tarefas = await _tarefas;
-            await widget.presenter.salvarTarefas(tarefas);
 
             double notaFinal = widget.presenter.calcularNotaFinal(tarefas);
             await widget.presenter.salvaCalculo(notaFinal);
 
-            List<dynamic> calculos =  await widget.presenter.getCalculos();
+            List<dynamic> calculos = await widget.presenter.getCalculos();
 
             setState(() {
               _calculos = calculos;
@@ -111,7 +139,6 @@ class _TarefasViewState extends State<TarefaView> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Notas salvas com sucesso')),
             );
-
           } catch (e, stack) {
             print(e);
             print(stack);

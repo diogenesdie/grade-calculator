@@ -18,10 +18,8 @@ class TarefaDao {
 
   // Getter que retorna a instância do banco de dados, ou a inicializa caso ainda não esteja criado
   Future<Database> get database async {
-    if (_database != null)
-      return _database!; // Se já existir um banco, retorna-o
-    _database = await _initDB(
-        'tarefas.db'); // Caso contrário, inicializa o banco de dados
+    if (_database != null) return _database!; // Se já existir um banco, retorna-o
+    _database = await _initDB('tarefas.db'); // Caso contrário, inicializa o banco de dados
     return _database!;
   }
 
@@ -33,10 +31,7 @@ class TarefaDao {
     final path = join(dbPath, filePath);
 
     // Abre o banco de dados, criando-o se ainda não existir
-    return await openDatabase(path,
-        version: 1,
-        onCreate:
-            _createDB // Define a função que criará as tabelas na primeira execução
+    return await openDatabase(path, version: 1, onCreate: _createDB // Define a função que criará as tabelas na primeira execução
         );
   }
 
@@ -65,11 +60,17 @@ class TarefaDao {
   }
 
   // Função para listar todas as tarefas armazenadas no banco de dados
-  Future<List<Tarefa>> listarTarefas() async {
+  Future<List<Tarefa>> listarTarefas(String filter) async {
     // Obtém a instância do banco de dados
     final db = await instance.database;
-    // Consulta todos os registros da tabela 'tarefas'
-    final result = await db.query('tarefas');
+
+    // Se a string de busca não for nula ou vazia, aplica o filtro no SQL
+    final result = await db.query(
+      'tarefas',
+      where: filter != null && filter.isNotEmpty ? 'titulo LIKE ?' : null,
+      whereArgs: filter != null && filter.isNotEmpty ? ['%$filter%'] : null,
+    );
+
     // Converte cada registro em um objeto Tarefa e retorna a lista de tarefas
     return result.map((json) => Tarefa.fromJson(json)).toList();
   }
