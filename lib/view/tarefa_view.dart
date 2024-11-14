@@ -1,11 +1,14 @@
 import 'package:calculadora_nota/model/tarefa_model.dart';
+import 'package:calculadora_nota/presenter/tarefa_crud_presenter.dart';
 import 'package:calculadora_nota/presenter/tarefa_presenter.dart';
 import 'package:flutter/material.dart';
+import 'package:calculadora_nota/view/tarefa_crud_view.dart';
 
 class TarefaView extends StatefulWidget {
   final TarefaPresenter presenter;
+  final TarefaCRUDPresenter crudPresenter;
 
-  TarefaView({required this.presenter});
+  TarefaView({required this.presenter, required this.crudPresenter});
 
   @override
   _TarefasViewState createState() => _TarefasViewState();
@@ -19,7 +22,7 @@ class _TarefasViewState extends State<TarefaView> {
   @override
   void initState() {
     super.initState();
-    _carregarTarefas(insere: true);
+    _carregarTarefas();
     _loadCalculos();
   }
 
@@ -31,11 +34,8 @@ class _TarefasViewState extends State<TarefaView> {
     });
   }
 
-  void _carregarTarefas({bool insere = false}) async {
-    if (insere) {
-      await widget.presenter.inserirTarefas();
-    }
-    List<Tarefa> tarefas = await widget.presenter.carregarTarefas(_filtro);
+  void _carregarTarefas() async {
+    List<Tarefa> tarefas = await widget.crudPresenter.getTarefas(_filtro);
 
     setState(() {
       _tarefas = tarefas;
@@ -47,10 +47,20 @@ class _TarefasViewState extends State<TarefaView> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notas dos Trabalhos'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => TarefaCRUDView(presenter: TarefaCRUDPresenter())),
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
-          // Barra de busca para filtrar as tarefas
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
@@ -60,13 +70,12 @@ class _TarefasViewState extends State<TarefaView> {
               ),
               onChanged: (value) {
                 setState(() {
-                  _filtro = value; // Atualiza o valor do filtro
+                  _filtro = value;
                 });
-                _carregarTarefas(); // Recarrega a lista com o novo filtro
+                _carregarTarefas();
               },
             ),
           ),
-          // Exibe a lista de tarefas filtradas ou todas
           Expanded(
             child: ListView.builder(
               itemCount: _tarefas.length,
@@ -91,7 +100,6 @@ class _TarefasViewState extends State<TarefaView> {
             ),
           ),
           const Divider(),
-          // Exibe a lista de cálculos
           Expanded(
             child: ListView.builder(
               itemCount: _calculos.length,

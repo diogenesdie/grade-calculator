@@ -72,6 +72,6 @@ class TarefaDao {
     );
 
     // Converte cada registro em um objeto Tarefa e retorna a lista de tarefas
-    return result.map((json) => Tarefa.fromJson(json)).toList();
+    return result.map((json) => Tarefa.fromJson(json, '')).toList();
   }
 }

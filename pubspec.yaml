@@ -38,6 +38,8 @@ dependencies:
   sqflite: ^2.3.3+1
   shared_preferences: ^2.2.3
   http: ^1.2.2
+  cloud_firestore: ^5.4.0
+  firebase_core: ^3.4.0
 
 dev_dependencies:
   flutter_test:
